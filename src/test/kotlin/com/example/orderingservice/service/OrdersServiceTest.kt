@@ -38,10 +38,26 @@ internal class OrdersServiceTest {
 
     @Test
     fun testOrder() {
-        ordersService.order(arrayOf("apple", "orange", "apple", "apple", "orange"))
+        ordersService.order(
+            arrayOf(
+                "apple",
+                "orange",
+                "apple",
+                "apple",
+                "orange",
+                "orange",
+                "orange",
+                "orange",
+                "orange"
+            )
+        )
 
-        assertEquals(1, listAppender.list.size)
-        assertEquals("total: 2.30", listAppender.list[0].message)
+        val logMessageIterator = listAppender.list.iterator()
+
+        assertEquals(3, listAppender.list.size)
+        assertEquals("subtotal: 3.30", logMessageIterator.next().message)
+        assertEquals("discount: 1.10", logMessageIterator.next().message)
+        assertEquals("total: 2.20", logMessageIterator.next().message)
     }
 
     @Test
@@ -49,17 +65,27 @@ internal class OrdersServiceTest {
         ordersService.order(arrayOf("apple", "orange", "apple", "apple", "orange"))
         ordersService.order(arrayOf("apple", "orange"))
 
-        assertEquals(2, listAppender.list.size)
-        assertEquals("total: 2.30", listAppender.list[0].message)
-        assertEquals("total: 0.85", listAppender.list[1].message)
+        val logMessageIterator = listAppender.list.iterator()
+
+        assertEquals(6, listAppender.list.size)
+        assertEquals("subtotal: 2.30", logMessageIterator.next().message)
+        assertEquals("discount: 0.60", logMessageIterator.next().message)
+        assertEquals("total: 1.70", logMessageIterator.next().message)
+        assertEquals("subtotal: 0.85", logMessageIterator.next().message)
+        assertEquals("discount: 0.00", logMessageIterator.next().message)
+        assertEquals("total: 0.85", logMessageIterator.next().message)
     }
 
     @Test
     fun testEmptyOrder() {
         ordersService.order(arrayOf())
 
-        assertEquals(1, listAppender.list.size)
-        assertEquals("total: 0", listAppender.list[0].message)
+        val logMessageIterator = listAppender.list.iterator()
+
+        assertEquals(3, listAppender.list.size)
+        assertEquals("subtotal: 0", logMessageIterator.next().message)
+        assertEquals("discount: 0", logMessageIterator.next().message)
+        assertEquals("total: 0", logMessageIterator.next().message)
     }
 
     @Test

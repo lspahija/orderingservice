@@ -6,4 +6,9 @@ import java.math.BigDecimal
 
 @ConstructorBinding
 @ConfigurationProperties("product")
-data class ProductConfig(val price: Map<String, BigDecimal>)
+data class ProductConfig(
+    val price: Map<String, BigDecimal>,
+    val discount: Map<String, Map<DiscountKey, Int>>,
+)
+
+enum class DiscountKey { PURCHASE, CHARGE }
