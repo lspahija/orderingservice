@@ -2,16 +2,25 @@ package com.example.orderingservice.service
 
 import com.example.orderingservice.config.DiscountKey
 import com.example.orderingservice.config.ProductConfig
+import com.example.orderingservice.event.OrderEvent
+import com.example.orderingservice.listener.OrderEventListener
 import org.slf4j.LoggerFactory
 import org.springframework.shell.standard.ShellComponent
 import org.springframework.shell.standard.ShellMethod
 import org.springframework.shell.standard.ShellOption
 import java.math.BigDecimal
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.*
 
 @ShellComponent
-class OrdersService(private val productConfig: ProductConfig) {
+class OrdersService(
+    private val productConfig: ProductConfig,
+    private val orderListeners: List<OrderEventListener>,
+) {
 
     private val logger = LoggerFactory.getLogger(OrdersService::class.java)
+    private val orders = mutableSetOf<OrderEvent>()
 
     @ShellMethod("Order products")
     fun order(@ShellOption products: Array<String>) {
@@ -32,6 +41,8 @@ class OrdersService(private val productConfig: ProductConfig) {
         logger.info("subtotal: $subTotal")
         logger.info("discount: $discount")
         logger.info("total: $total")
+
+        processOrder(normalized, total, discount)
     }
 
     fun getDiscount(product: String, quantity: Int): BigDecimal {
@@ -42,4 +53,21 @@ class OrdersService(private val productConfig: ProductConfig) {
         val totalFreeQuantity = freeQuantityPerCriterionSatisfied * timesDiscountCriterionSatisfied
         return productConfig.price[product]!!.times(BigDecimal(totalFreeQuantity))
     }
+
+    fun processOrder(products: List<String>, total: BigDecimal, discount: BigDecimal) =
+        OrderEvent(
+            UUID.randomUUID(),
+            products,
+            total,
+            discount,
+            LocalDateTime.now(),
+            getEstimatedDeliveryDate()
+        ).also {
+            orders.add(it)
+            notifyListenersOrderProcessed(it)
+        }
+
+    fun notifyListenersOrderProcessed(order: OrderEvent) = orderListeners.forEach { it.onProcessed(order) }
+
+    fun getEstimatedDeliveryDate(): LocalDate = (5..10).random().let { LocalDate.now().plusDays(it.toLong()) }
 }
