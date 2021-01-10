@@ -15,4 +15,7 @@ class MailService : OrderEventListener {
             "Your order has been successfully processed " +
                     "and its estimated delivery date is ${order.estimatedDeliveryDate}."
         )
+
+    override fun onOrderFailed(message: String) =
+        logger.info(message)
 }

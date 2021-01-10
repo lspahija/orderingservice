@@ -9,6 +9,7 @@ import java.math.BigDecimal
 data class ProductConfig(
     val price: Map<String, BigDecimal>,
     val discount: Map<String, Map<DiscountKey, Int>>,
+    val stock: Map<String, Int>
 )
 
 enum class DiscountKey { PURCHASE, CHARGE }

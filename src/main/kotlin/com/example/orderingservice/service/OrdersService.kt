@@ -17,6 +17,7 @@ import java.util.*
 class OrdersService(
     private val productConfig: ProductConfig,
     private val orderListeners: List<OrderEventListener>,
+    private val stockService: StockService
 ) {
 
     private val logger = LoggerFactory.getLogger(OrdersService::class.java)
@@ -42,7 +43,7 @@ class OrdersService(
         logger.info("discount: $discount")
         logger.info("total: $total")
 
-        processOrder(normalized, total, discount)
+        processOrder(normalized, productToQuantity, total, discount)
     }
 
     fun getDiscount(product: String, quantity: Int): BigDecimal {
@@ -54,7 +55,14 @@ class OrdersService(
         return productConfig.price[product]!!.times(BigDecimal(totalFreeQuantity))
     }
 
-    fun processOrder(products: List<String>, total: BigDecimal, discount: BigDecimal) =
+    fun processOrder(
+        products: List<String>,
+        productToQuantityOrdered: Map<String, Int>,
+        total: BigDecimal,
+        discount: BigDecimal
+    ) {
+        if (!stockService.pickIfAdequateStockAvailable(productToQuantityOrdered)) return
+
         OrderEvent(
             UUID.randomUUID(),
             products,
@@ -66,6 +74,7 @@ class OrdersService(
             orders.add(it)
             notifyListenersOrderProcessed(it)
         }
+    }
 
     fun notifyListenersOrderProcessed(order: OrderEvent) = orderListeners.forEach { it.onProcessed(order) }
 

@@ -9,3 +9,6 @@ product:
     orange:
       purchase: 3
       charge: 2
+  stock:
+    apple: 2
+    orange: 3
