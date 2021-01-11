@@ -2,10 +2,14 @@ package com.example.orderingservice.service
 
 import com.example.orderingservice.config.ProductConfig
 import com.example.orderingservice.listener.OrderEventListener
+import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
 
 @Service
-class StockService(productConfig: ProductConfig, private val orderListeners: List<OrderEventListener>) {
+class StockService(
+    productConfig: ProductConfig,
+    private val kafkaTemplate: KafkaTemplate<Any, Any>
+) {
 
     private val productToStock = productConfig.stock.toMutableMap()
 
@@ -26,7 +30,7 @@ class StockService(productConfig: ProductConfig, private val orderListeners: Lis
                     "${productToStock[it.key]} units of item \"${it.key}\" are available in stock but you attempted to purchase ${it.value} units."
                 }
 
-            orderListeners.forEach { it.onOrderFailed(message) }
+            kafkaTemplate.send("OrderFailed", message)
             return false
         }
 

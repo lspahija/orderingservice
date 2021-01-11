@@ -12,3 +12,8 @@ product:
   stock:
     apple: 2
     orange: 3
+
+spring:
+  kafka:
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

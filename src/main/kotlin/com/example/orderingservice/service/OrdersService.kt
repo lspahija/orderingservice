@@ -3,8 +3,8 @@ package com.example.orderingservice.service
 import com.example.orderingservice.config.DiscountKey
 import com.example.orderingservice.config.ProductConfig
 import com.example.orderingservice.event.OrderEvent
-import com.example.orderingservice.listener.OrderEventListener
 import org.slf4j.LoggerFactory
+import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.shell.standard.ShellComponent
 import org.springframework.shell.standard.ShellMethod
 import org.springframework.shell.standard.ShellOption
@@ -16,8 +16,8 @@ import java.util.*
 @ShellComponent
 class OrdersService(
     private val productConfig: ProductConfig,
-    private val orderListeners: List<OrderEventListener>,
-    private val stockService: StockService
+    private val stockService: StockService,
+    private val kafkaTemplate: KafkaTemplate<Any, Any>
 ) {
 
     private val logger = LoggerFactory.getLogger(OrdersService::class.java)
@@ -25,6 +25,8 @@ class OrdersService(
 
     @ShellMethod("Order products")
     fun order(@ShellOption products: Array<String>) {
+        kafkaTemplate.send("OrderSubmitted", products)
+
         val normalized = products
             .map { it.toLowerCase() }
             .onEach { if (!productConfig.price.containsKey(it)) throw IllegalArgumentException("No product exists with name $it.") }
@@ -76,7 +78,7 @@ class OrdersService(
         }
     }
 
-    fun notifyListenersOrderProcessed(order: OrderEvent) = orderListeners.forEach { it.onProcessed(order) }
+    fun notifyListenersOrderProcessed(orderEvent: OrderEvent) = kafkaTemplate.send("OrderProcessed", orderEvent)
 
     fun getEstimatedDeliveryDate(): LocalDate = (5..10).random().let { LocalDate.now().plusDays(it.toLong()) }
 }
