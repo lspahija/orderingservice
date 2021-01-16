@@ -78,7 +78,9 @@ class OrdersService(
         }
     }
 
-    fun notifyListenersOrderProcessed(orderEvent: OrderEvent) = kafkaTemplate.send("OrderProcessed", orderEvent)
+    fun notifyListenersOrderProcessed(orderEvent: OrderEvent) {
+        kafkaTemplate.send("OrderProcessed", orderEvent)
+    }
 
     fun getEstimatedDeliveryDate(): LocalDate = (5..10).random().let { LocalDate.now().plusDays(it.toLong()) }
 }

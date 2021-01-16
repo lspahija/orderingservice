@@ -8,9 +8,12 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.test.context.ActiveProfiles
 
 @SpringBootTest
@@ -19,6 +22,9 @@ internal class OrdersServiceTest {
 
     @Autowired
     private lateinit var ordersService: OrdersService
+
+    @MockBean
+    private lateinit var kafkaTemplate: KafkaTemplate<Any, Any>
 
     private val listAppender = ListAppender<ILoggingEvent>()
 
@@ -66,14 +72,15 @@ internal class OrdersServiceTest {
         ordersService.order(arrayOf("apple", "orange"))
 
         val logMessageIterator = listAppender.list.iterator()
+        val getNextMessage = { logMessageIterator.next().message }
 
         assertEquals(6, listAppender.list.size)
-        assertEquals("subtotal: 2.30", logMessageIterator.next().message)
-        assertEquals("discount: 0.60", logMessageIterator.next().message)
-        assertEquals("total: 1.70", logMessageIterator.next().message)
-        assertEquals("subtotal: 0.85", logMessageIterator.next().message)
-        assertEquals("discount: 0.00", logMessageIterator.next().message)
-        assertEquals("total: 0.85", logMessageIterator.next().message)
+        assertEquals("subtotal: 2.30", getNextMessage())
+        assertEquals("discount: 0.60", getNextMessage())
+        assertEquals("total: 1.70", getNextMessage())
+        assertEquals("subtotal: 0.85", getNextMessage())
+        assertEquals("discount: 0.00", getNextMessage())
+        assertEquals("total: 0.85", getNextMessage())
     }
 
     @Test
@@ -90,7 +97,7 @@ internal class OrdersServiceTest {
 
     @Test
     fun testNonExistingProduct() {
-        org.junit.jupiter.api.assertThrows<IllegalArgumentException> {
+        assertThrows<IllegalArgumentException> {
             ordersService.order(
                 arrayOf(
                     "apple",
